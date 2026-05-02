@@ -706,6 +706,43 @@ $('saveManualSaleModal').addEventListener('click', async () => {
   }
 });
 
+// ── Export CSV ────────────────────────────────────────────────────────────────
+$('exportCsvBtn').addEventListener('click', async () => {
+  const date = $('filterDate').value;
+  const url = date ? `/api/sales?date=${date}` : '/api/sales';
+  try {
+    const sales = await api('GET', url);
+    if (!sales.length) return showToast('Tidak ada data untuk diekspor', 'error');
+
+    const headers = ['Tanggal','No. Pesanan','Pembeli','Produk','Status','Ongkir','Diskon Shopee','Diskon Toko','Total Pendapatan','Catatan'];
+    const rows = sales.map(s => [
+      s.date || '',
+      s.orderId || '',
+      s.buyerName || '',
+      (s.items || []).map(i => `${i.productName}${i.variant ? ` (${i.variant})` : ''} x${i.quantity}`).join('; '),
+      s.status || '',
+      s.shippingFee || 0,
+      s.shopeeDiscount || 0,
+      s.sellerDiscount || 0,
+      s.totalIncome || 0,
+      s.notes || '',
+    ]);
+
+    const csv = [headers, ...rows]
+      .map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `penjualan${date ? '_' + date : ''}_${today()}.csv`;
+    link.click();
+    showToast('Data berhasil diekspor!', 'success');
+  } catch (err) {
+    showToast('Gagal export: ' + err.message, 'error');
+  }
+});
+
 // Expose global functions needed by inline onclick handlers
 window.openEditSale = openEditSale;
 window.deleteSale = deleteSale;

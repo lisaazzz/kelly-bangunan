@@ -259,6 +259,7 @@ textarea { resize: vertical; }
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 /* ── Tables ──────────────────────────────────────────────────────────────────── */
@@ -547,8 +548,22 @@ mark {
 /* ── Responsive ──────────────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
   .form-grid { grid-template-columns: 1fr; }
-  .item-row { grid-template-columns: 1fr auto; }
-  .item-row input:nth-child(2),
-  .item-row input:nth-child(3) { display: none; }
+
+  .item-row {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+  }
+  .item-row input:first-child { grid-column: 1 / -1; }
+
   .summary-grid { grid-template-columns: 1fr 1fr; }
+
+  .search-input { width: 100%; }
+
+  .toolbar { flex-direction: column; align-items: stretch; }
+  .toolbar h2 { margin-bottom: 4px; }
+  .toolbar-right { justify-content: flex-end; }
+
+  .modal-lg { max-width: 100%; }
+
+  .logo-text { font-size: 15px; }
 }
