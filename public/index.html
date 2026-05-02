@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shopee Sales Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">🛍️</span>
+        <span class="logo-text">Shopee Sales Tracker</span>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="upload">📸 Upload Screenshot</button>
+    <button class="tab-btn" data-tab="sales">📋 Data Penjualan</button>
+    <button class="tab-btn" data-tab="products">📦 Data Modal</button>
+    <button class="tab-btn" data-tab="report">📊 Laporan</button>
+  </nav>
+
+  <main class="container">
+
+    <!-- ── Tab Upload ── -->
+    <section id="tab-upload" class="tab-content active">
+      <div class="card">
+        <h2>Upload Screenshot Shopee</h2>
+        <p class="hint">Upload screenshot pesanan dari aplikasi/website Shopee. AI akan membaca dan mengekstrak data penjualan secara otomatis.</p>
+
+        <div class="upload-area" id="uploadArea">
+          <input type="file" id="fileInput" accept="image/*" hidden />
+          <div class="upload-placeholder" id="uploadPlaceholder">
+            <span class="upload-icon">📷</span>
+            <p>Klik atau drag &amp; drop screenshot di sini</p>
+            <p class="upload-hint">JPG, PNG, WEBP — maks. 20MB</p>
+          </div>
+          <img id="previewImg" class="preview-img hidden" alt="Preview" />
+        </div>
+
+        <button class="btn btn-primary btn-full" id="analyzeBtn" disabled>
+          <span id="analyzeBtnText">🔍 Analisis Screenshot</span>
+        </button>
+      </div>
+
+      <!-- Hasil Ekstraksi -->
+      <div class="card hidden" id="resultCard">
+        <div class="result-header">
+          <div>
+            <h2>Hasil Ekstraksi — Periksa &amp; Simpan</h2>
+            <p class="hint">Periksa data yang diekstrak AI, edit jika perlu, lalu simpan.</p>
+          </div>
+          <div id="confidenceBadge" class="confidence-badge"></div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Tanggal</label>
+            <input type="date" id="rDate" />
+          </div>
+          <div class="form-group">
+            <label>No. Pesanan</label>
+            <input type="text" id="rOrderId" placeholder="Nomor pesanan Shopee" />
+          </div>
+          <div class="form-group">
+            <label>Nama Pembeli</label>
+            <input type="text" id="rBuyer" placeholder="Nama pembeli" />
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <input type="text" id="rStatus" placeholder="Status pesanan" />
+          </div>
+          <div class="form-group">
+            <label>Jasa Kirim</label>
+            <input type="text" id="rShipping" placeholder="JNE, J&T, Sicepat, dll" />
+          </div>
+          <div class="form-group">
+            <label>Ongkos Kirim (Rp)</label>
+            <input type="number" id="rShippingFee" min="0" placeholder="0" />
+          </div>
+          <div class="form-group">
+            <label>Diskon Shopee (Rp)</label>
+            <input type="number" id="rShopeeDiscount" min="0" placeholder="0" />
+          </div>
+          <div class="form-group">
+            <label>Diskon Toko (Rp)</label>
+            <input type="number" id="rSellerDiscount" min="0" placeholder="0" />
+          </div>
+          <div class="form-group">
+            <label>Total Pendapatan (Rp)</label>
+            <input type="number" id="rTotalIncome" min="0" placeholder="0" />
+          </div>
+        </div>
+
+        <div class="items-section">
+          <div class="items-header">
+            <h3>Item Produk</h3>
+            <button class="btn btn-sm btn-outline" id="addItemBtn">+ Tambah Item</button>
+          </div>
+          <div id="itemsList"></div>
+        </div>
+
+        <div class="form-group">
+          <label>Catatan</label>
+          <textarea id="rNotes" rows="2" placeholder="Catatan tambahan..."></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-outline" id="resetBtn">↩ Reset</button>
+          <button class="btn btn-success" id="saveBtn">💾 Simpan Penjualan</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Tab Data Penjualan ── -->
+    <section id="tab-sales" class="tab-content hidden">
+      <div class="card">
+        <div class="toolbar">
+          <h2>Data Penjualan</h2>
+          <div class="toolbar-right">
+            <input type="date" id="filterDate" />
+            <button class="btn btn-primary btn-sm" id="filterBtn">Filter</button>
+            <button class="btn btn-outline btn-sm" id="clearFilterBtn">Semua</button>
+            <button class="btn btn-success btn-sm" id="addManualSaleBtn">+ Input Manual</button>
+          </div>
+        </div>
+        <div id="salesTable" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <!-- ── Tab Modal / Produk ── -->
+    <section id="tab-products" class="tab-content hidden">
+      <div class="card">
+        <div class="toolbar">
+          <h2>Data Modal Barang</h2>
+          <div class="toolbar-right">
+            <input type="search" id="productSearch" placeholder="🔍 Cari nama, SKU, kategori..." class="search-input" />
+            <button class="btn btn-primary btn-sm" id="addProductBtn">+ Tambah Produk</button>
+          </div>
+        </div>
+        <div id="productsTable" class="table-wrap"></div>
+      </div>
+    </section>
+
+    <!-- ── Tab Laporan ── -->
+    <section id="tab-report" class="tab-content hidden">
+      <div class="card">
+        <h2>Laporan Penjualan &amp; Laba Rugi</h2>
+        <div class="report-controls">
+          <div class="form-group">
+            <label>Dari Tanggal</label>
+            <input type="date" id="reportFrom" />
+          </div>
+          <div class="form-group">
+            <label>Sampai Tanggal</label>
+            <input type="date" id="reportTo" />
+          </div>
+          <button class="btn btn-primary" id="generateReport">📊 Generate Laporan</button>
+        </div>
+      </div>
+
+      <div id="reportContent" class="hidden">
+        <div class="card" id="modalCoverage"></div>
+        <div class="summary-grid">
+          <div class="summary-card green">
+            <div class="summary-label">Total Omzet</div>
+            <div class="summary-value" id="sOmzet">Rp 0</div>
+          </div>
+          <div class="summary-card blue">
+            <div class="summary-label">Total Modal (HPP)</div>
+            <div class="summary-value" id="sHPP">Rp 0</div>
+          </div>
+          <div class="summary-card orange">
+            <div class="summary-label">Gross Profit</div>
+            <div class="summary-value" id="sGross">Rp 0</div>
+          </div>
+          <div class="summary-card purple">
+            <div class="summary-label">Margin</div>
+            <div class="summary-value" id="sMargin">0%</div>
+          </div>
+          <div class="summary-card gray">
+            <div class="summary-label">Total Transaksi</div>
+            <div class="summary-value" id="sTrx">0</div>
+          </div>
+          <div class="summary-card gray">
+            <div class="summary-label">Total Diskon</div>
+            <div class="summary-value" id="sDiscount">Rp 0</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Detail Per Produk</h3>
+          <div id="itemReportTable" class="table-wrap"></div>
+        </div>
+
+        <div class="card">
+          <h3>Laporan Laba Rugi</h3>
+          <div class="pl-statement" id="plStatement"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Modal Produk ── -->
+  <div class="modal-overlay hidden" id="productModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="productModalTitle">Tambah Produk</h3>
+        <button class="modal-close" id="closeProductModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="pmId" />
+        <div class="form-group">
+          <label>Nama Produk *</label>
+          <input type="text" id="pmName" placeholder="Nama produk (harus sama persis dengan di Shopee)" />
+        </div>
+        <div class="form-group">
+          <label>SKU / Kode Produk</label>
+          <input type="text" id="pmSku" placeholder="Opsional" />
+        </div>
+        <div class="form-group">
+          <label>Harga Modal (Rp) *</label>
+          <input type="number" id="pmModal" min="0" placeholder="Harga beli/produksi" />
+        </div>
+        <div class="form-group">
+          <label>Harga Jual Normal (Rp)</label>
+          <input type="number" id="pmSell" min="0" placeholder="Harga jual normal di Shopee" />
+        </div>
+        <div class="form-group">
+          <label>Kategori</label>
+          <input type="text" id="pmCategory" placeholder="Opsional" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="cancelProductModal">Batal</button>
+        <button class="btn btn-success" id="saveProductModal">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal Edit Sale ── -->
+  <div class="modal-overlay hidden" id="saleModal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3>Edit Penjualan</h3>
+        <button class="modal-close" id="closeSaleModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="smId" />
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Tanggal</label>
+            <input type="date" id="smDate" />
+          </div>
+          <div class="form-group">
+            <label>No. Pesanan</label>
+            <input type="text" id="smOrderId" />
+          </div>
+          <div class="form-group">
+            <label>Nama Pembeli</label>
+            <input type="text" id="smBuyer" />
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <input type="text" id="smStatus" />
+          </div>
+          <div class="form-group">
+            <label>Ongkir (Rp)</label>
+            <input type="number" id="smShippingFee" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Diskon Shopee (Rp)</label>
+            <input type="number" id="smShopeeDiscount" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Diskon Toko (Rp)</label>
+            <input type="number" id="smSellerDiscount" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Total Pendapatan (Rp)</label>
+            <input type="number" id="smTotalIncome" min="0" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Catatan</label>
+          <textarea id="smNotes" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="cancelSaleModal">Batal</button>
+        <button class="btn btn-success" id="saveSaleModal">Simpan Perubahan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal Input Manual Penjualan ── -->
+  <div class="modal-overlay hidden" id="manualSaleModal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 id="manualSaleTitle">Input Penjualan Manual</h3>
+        <button class="modal-close" id="closeManualSaleModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="msEditId" />
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Tanggal *</label>
+            <input type="date" id="msDate" />
+          </div>
+          <div class="form-group">
+            <label>No. Pesanan</label>
+            <input type="text" id="msOrderId" placeholder="Nomor pesanan Shopee" />
+          </div>
+          <div class="form-group">
+            <label>Nama Pembeli</label>
+            <input type="text" id="msBuyer" placeholder="Nama pembeli" />
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <input type="text" id="msStatus" placeholder="Selesai, Dikirim, dll" />
+          </div>
+          <div class="form-group">
+            <label>Jasa Kirim</label>
+            <input type="text" id="msShipping" placeholder="JNE, J&T, Sicepat, dll" />
+          </div>
+          <div class="form-group">
+            <label>Ongkos Kirim (Rp)</label>
+            <input type="number" id="msShippingFee" min="0" placeholder="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label>Diskon Shopee (Rp)</label>
+            <input type="number" id="msShopeeDiscount" min="0" placeholder="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label>Diskon Toko (Rp)</label>
+            <input type="number" id="msSellerDiscount" min="0" placeholder="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label>Total Pendapatan (Rp) *</label>
+            <input type="number" id="msTotalIncome" min="0" placeholder="0" value="0" />
+          </div>
+        </div>
+
+        <div class="items-section">
+          <div class="items-header">
+            <h3>Item Produk</h3>
+            <button class="btn btn-sm btn-outline" id="msAddItemBtn">+ Tambah Item</button>
+          </div>
+          <div id="msItemsList"></div>
+        </div>
+
+        <div class="form-group">
+          <label>Catatan</label>
+          <textarea id="msNotes" rows="2" placeholder="Catatan tambahan..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="cancelManualSaleModal">Batal</button>
+        <button class="btn btn-success" id="saveManualSaleModal">💾 Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
